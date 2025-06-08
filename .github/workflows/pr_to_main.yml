@@ -1,0 +1,97 @@
+# .github/workflows/main.yml
+
+name: Main CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # Job for the Rust Backend
+  ci-backend:
+    name: Backend CI (Rust)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/**/Cargo.lock') }}
+
+      - name: Audit for security vulnerabilities
+        run: |
+          cargo install cargo-audit
+          cargo audit
+        working-directory: ./backend
+
+      - name: Check formatting
+        run: cargo fmt -- --check
+        working-directory: ./backend
+
+      - name: Lint with Clippy
+        run: cargo clippy -- -D warnings
+        working-directory: ./backend
+
+      - name: Build
+        run: cargo build --verbose
+        working-directory: ./backend
+
+      - name: Run tests
+        run: cargo test --verbose
+        working-directory: ./backend
+
+  # Job for the Flutter Frontend
+  ci-frontend:
+    name: Frontend CI (Flutter)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Cache Pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('frontend/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+        working-directory: ./frontend
+
+      - name: Check for dependency vulnerabilities
+        run: dart pub outdated --mode=security --fail-on-vulnerability
+        working-directory: ./frontend
+
+      - name: Analyze Dart code (Lint)
+        run: flutter analyze
+        working-directory: ./frontend
+
+      - name: Run widget tests
+        run: flutter test
+        working-directory: ./frontend
+      
+      - name: Build Flutter App (Web)
+        run: flutter build web --release
+        working-directory: ./frontend
