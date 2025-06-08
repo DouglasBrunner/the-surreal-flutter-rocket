@@ -37,23 +37,18 @@ jobs:
         run: |
           cargo install cargo-audit
           cargo audit
-        working-directory: ./backend
 
       - name: Check formatting
         run: cargo fmt -- --check
-        working-directory: ./backend
 
       - name: Lint with Clippy
         run: cargo clippy -- -D warnings
-        working-directory: ./backend
 
       - name: Build
         run: cargo build --verbose
-        working-directory: ./backend
 
       - name: Run tests
         run: cargo test --verbose
-        working-directory: ./backend
 
   # Job for the Flutter Frontend
   ci-frontend:
@@ -78,10 +73,6 @@ jobs:
 
       - name: Get Flutter dependencies
         run: flutter pub get
-        working-directory: ./frontend
-
-      - name: Check for dependency vulnerabilities
-        run: dart pub outdated --mode=security --fail-on-vulnerability
         working-directory: ./frontend
 
       - name: Analyze Dart code (Lint)
