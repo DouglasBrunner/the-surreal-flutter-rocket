@@ -37,23 +37,18 @@ jobs:
         run: |
           cargo install cargo-audit
           cargo audit
-        working-directory: ./backend
 
       - name: Check formatting
         run: cargo fmt -- --check
-        working-directory: ./backend
 
       - name: Lint with Clippy
         run: cargo clippy -- -D warnings
-        working-directory: ./backend
 
       - name: Build
         run: cargo build --verbose
-        working-directory: ./backend
 
       - name: Run tests
         run: cargo test --verbose
-        working-directory: ./backend
 
   # Job for the Flutter Frontend
   ci-frontend:
