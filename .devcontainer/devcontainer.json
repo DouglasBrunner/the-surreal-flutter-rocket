@@ -1,0 +1,7 @@
+{
+  "name": "surreal-flutter-rocket",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "postCreateCommand": "rustc --version && /opt/flutter/bin/flutter doctor || true"
+}
