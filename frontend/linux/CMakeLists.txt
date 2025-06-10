@@ -91,6 +91,15 @@ install(CODE "
 set(INSTALL_BUNDLE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data")
 set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 
+# Bundle the custom Rust library with the application
+set(LIB_DIR "${CMAKE_SOURCE_DIR}/bundle")
+install(FILES "${LIB_DIR}/libhello.so" DESTINATION "lib")
+
+# This line should already exist in your file. Add the code ABOVE it.
+install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "bin"
+       BUNDLE DESTINATION "."
+       LIBRARY DESTINATION "lib")
+
 install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
   COMPONENT Runtime)
 

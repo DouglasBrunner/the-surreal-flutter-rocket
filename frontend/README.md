@@ -1,16 +1,20 @@
-# frontend
+# Surreal Flutter Rocket
 
-A new Flutter project.
+This monorepo hosts a full-stack application built with SurrealDB, a Rust backend using Rocket, and a Flutter frontend.  The goal is to provide a single repository where OpenAPI stubs, Cucumber specifications, and technical documentation evolve together.
 
-## Getting Started
+- **backend/** – Rust workspace for API services and integrations
+- **frontend/** – Flutter application targeting mobile and desktop
+- **specs/** – Behaviour driven tests and API definitions
+- **docs/** – Architecture notes and additional guides
 
-This project is a starting point for a Flutter application.
+All code is released under a dual MIT/Apache-2.0 license.
 
-A few resources to get you started if this is your first Flutter project:
+## Building the Rust FFI library
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+To build the Rust code that is consumed by the Flutter app run:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+cargo build --release -p hello
+```
+
+This will create a shared library (`libhello.so` on Linux, `libhello.dylib` on macOS, or `hello.dll` on Windows) in `target/release/` which must be available when running the Flutter application.
