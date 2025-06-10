@@ -35,7 +35,7 @@ jobs:
 
       - name: Audit for security vulnerabilities
         run: |
-          cargo install cargo-audit
+          cargo install cargo-audit --force --locked
           cargo audit
 
       - name: Check formatting
