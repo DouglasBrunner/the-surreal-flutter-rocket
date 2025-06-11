@@ -1,3 +1,6 @@
 [workspace]
-members = ["backend/crates/*"]
+members = [
+    "crates/rust_shared",
+    "crates/rust_server"
+    ]
 resolver = "2"

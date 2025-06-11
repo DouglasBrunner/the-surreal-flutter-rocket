@@ -1,0 +1,12 @@
+[package]
+name = "hello"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+# This section is crucial. It tells Cargo to produce a C-compatible 
+# dynamic library, which results in a .so file on Linux.
+crate-type = ["cdylib"]
+
+[dependencies]
+# Dependencies for your Rust code would go here
