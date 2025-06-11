@@ -18,3 +18,12 @@ cargo build --release -p hello
 ```
 
 This will create a shared library (`libhello.so` on Linux, `libhello.dylib` on macOS, or `hello.dll` on Windows) in `target/release/` which must be available when running the Flutter application.
+
+
+## Env Setup
+
+# Install the flutter_rust_bridge code generator
+cargo install flutter_rust_bridge_codegen
+
+# Install the tool for compiling Rust to WebAssembly
+cargo install wasm-pack
