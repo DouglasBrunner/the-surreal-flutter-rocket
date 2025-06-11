@@ -1,5 +1,5 @@
-# .github/workflows/test-and-build.yml
-name: Test and Build
+# .github/workflows/ci.yml
+name: Continuous Integration
 
 on:
   push:
@@ -8,54 +8,77 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # Job 1: Test the Rust Server against a real SurrealDB instance
+  # =================================================================
+  #  Phase 1: Quick Checks (Run first in parallel)
+  # =================================================================
+  flutter-check:
+    name: Flutter Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - name: Install Flutter dependencies
+        run: flutter pub get
+        working-directory: ./flutter_app
+      - name: Analyze Flutter code
+        run: flutter analyze
+        working-directory: ./flutter_app
+
+  rust-check:
+    name: Rust Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Check Rust formatting
+        run: cargo fmt --all -- --check
+      - name: Check Rust with Clippy
+        run: cargo clippy --all-targets -- -D warnings
+      - name: Audit for security vulnerabilities
+        run: |
+          cargo install cargo-audit
+          cargo audit
+
+  # =================================================================
+  #  Phase 2: Test & Build (Only runs if checks pass)
+  # =================================================================
   test-rust-server:
     name: Test Rust Server
     runs-on: ubuntu-latest
-    # Use a service container to run SurrealDB
+    needs: [rust-check] # <-- This job WAITS for `rust-check` to succeed
     services:
       surrealdb:
         image: surrealdb/surrealdb:latest
         ports:
           - 8000:8000
-        # Start SurrealDB in memory with root user/pass
         options: --user root --pass root mem
-
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@v2
       - name: Run Rust server tests
-        # Pass the DB connection info from the service to the tests
         env:
           SURREAL_URL: ws://localhost:8000
           SURREAL_USER: root
           SURREAL_PASS: root
         run: cargo test --package rust_server
 
-  # Job 2: Build and Test the Flutter Desktop (Linux) App
   build-and-test-linux:
     name: Build & Test (Linux)
     runs-on: ubuntu-latest
-    needs: test-rust-server # Don't run this if server tests fail
+    needs: [flutter-check, rust-check, test-rust-server] # <-- WAITS for all three jobs
     steps:
       - uses: actions/checkout@v4
-      # Setup Rust
       - uses: dtolnay/rust-toolchain@stable
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@v2
-      # Setup Flutter
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.PUB_CACHE }}
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: ${{ runner.os }}-pub-
-      # Build and Test
+      - run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
       - name: Build shared library (.so) for FFI
         run: cargo build --release --package rust_shared
       - name: Install Flutter dependencies
@@ -68,30 +91,20 @@ jobs:
         run: flutter build linux --release
         working-directory: ./flutter_app
 
-  # Job 3: Build the Flutter Web App
   build-web:
     name: Build (Web)
     runs-on: ubuntu-latest
-    needs: test-rust-server # Don't run this if server tests fail
+    needs: [flutter-check, rust-check, test-rust-server] # <-- WAITS for all three jobs
     steps:
       - uses: actions/checkout@v4
-      # Setup Rust & Wasm-Pack
       - uses: dtolnay/rust-toolchain@stable
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@v2
       - name: Install wasm-pack
         run: cargo install wasm-pack
-      # Setup Flutter
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.PUB_CACHE }}
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: ${{ runner.os }}-pub-
-      # Build and Test
       - name: Build shared library (.wasm) for Web
         run: wasm-pack build --target web --out-dir ./flutter_app/web/pkg ./crates/rust_shared
       - name: Install Flutter dependencies
