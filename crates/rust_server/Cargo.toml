@@ -3,5 +3,9 @@ name = "server"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+with_rocket = ["rocket"]
+default = []
+
 [dependencies]
-# Dependencies for your Rust code would go here
+rocket = { version = "0.5.0-rc.4", optional = true, default-features = false, features = ["tls"] }
