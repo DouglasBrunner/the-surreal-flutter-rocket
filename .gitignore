@@ -13,3 +13,6 @@
 .packages
 pubspec.lock
 flutter-sdk/
+
+# General
+**/gen/**

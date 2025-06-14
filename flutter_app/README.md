@@ -9,18 +9,21 @@ This monorepo hosts a full-stack application built with SurrealDB, a Rust backen
 
 All code is released under a dual MIT/Apache-2.0 license.
 
-## Setup
-export RUST_LIB_DIR="$(pwd)/crates/rust_shared/target/debug"
+## Building the Rust FFI library
 
-## Building 
+To build the Rust code that is consumed by the Flutter app run:
 
-From project root:
-cargo build --release -p server 
-cargo build --release -p shared
-flutter_rust_bridge_codegen generate
+```bash
+cargo build --release -p hello
+```
 
-From flutter_app:
-flutter clean
-flutter pub get
-flutter analyse # optional
+This will create a shared library (`libhello.so` on Linux, `libhello.dylib` on macOS, or `hello.dll` on Windows) in `target/release/` which must be available when running the Flutter application.
 
+
+## Env Setup
+
+# Install the flutter_rust_bridge code generator
+cargo install flutter_rust_bridge_codegen
+
+# Install the tool for compiling Rust to WebAssembly
+cargo install wasm-pack

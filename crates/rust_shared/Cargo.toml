@@ -1,0 +1,21 @@
+# crates/rust_shared/Cargo.toml (corrected version)
+[package]
+name = "shared"
+version = "0.1.0"
+edition = "2021"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
+
+# produce libshared.{so|dll|dylib}
+[lib]
+crate-type = ["cdylib"]
+
+# ---------- code *inside* the library ----------
+[dependencies]
+flutter_rust_bridge = "=2.10.0"
+flutter_rust_bridge_macros = "=2.10.0"
+
+# ---------- code *inside* build.rs -------------
+[build-dependencies]
+flutter_rust_bridge_codegen = "=2.10.0"

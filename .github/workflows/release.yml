@@ -1,0 +1,57 @@
+# .github/workflows/release.yml
+name: Create Release
+
+on:
+  # Allow manual triggering from the GitHub Actions UI
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      # --- Build All Artifacts ---
+      - name: Build Rust Server binary
+        run: cargo build --release --package rust_server
+      - name: Build Flutter Linux
+        run: |
+          cargo build --release --package rust_shared
+          cd flutter_app
+          flutter pub get
+          flutter build linux --release
+      - name: Build Flutter Web
+        run: |
+          cargo install wasm-pack
+          wasm-pack build --target web --out-dir ./flutter_app/web/pkg ./crates/rust_shared
+          cd flutter_app
+          flutter pub get
+          flutter build web --release
+
+      # --- Package Artifacts ---
+      - name: Package Linux build
+        run: tar -czvf linux-build.tar.gz -C flutter_app/build/linux/x64/release/bundle .
+      - name: Package Web build
+        run: tar -czvf web-build.tar.gz -C flutter_app/build/web .
+      - name: Package Server binary
+        run: tar -czvf server-build.tar.gz -C target/release rust_server
+
+      # --- Create GitHub Release ---
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          files: |
+            linux-build.tar.gz
+            web-build.tar.gz
+            server-build.tar.gz
